@@ -56,6 +56,8 @@
 
 #include <zend_hash.h>
 #include "html_tables.h"
+#include "ext/utf8/utf8.h"
+#include "ext/utf8/utf8decode.h"
 
 /* Macro for disabling flag of translation of non-basic entities where this isn't supported.
  * Not appropriate for html_entity_decode/htmlspecialchars_decode */
@@ -84,6 +86,34 @@
 #define sjis_lead(c) ((c) != 0x80 && (c) != 0xA0 && (c) < 0xFD)
 #define sjis_trail(c) ((c) >= 0x40  && (c) != 0x7F && (c) < 0xFD)
 
+/* {{{ utf8_get_next_codepoint
+ */
+static inline uint32_t
+utf8_get_next_codepoint(const char8_t *str, size_t str_size, uint8_t *bytes, zend_bool *valid)
+{
+	uint32_t codepoint;
+	uint32_t current = UTF8_ACCEPT, prev = UTF8_ACCEPT;
+	uint8_t  count = 1;
+
+	for (; count <= str_size; count++) {
+		prev = current;
+		utf8_decode(&current, &codepoint, *str++);
+		if (current == UTF8_ACCEPT) {
+			break;
+		} else if (current == UTF8_REJECT) {
+			if (prev != UTF8_ACCEPT)
+				count--;
+			break;
+		}
+	}
+
+	*bytes = count;
+	*valid = (current == UTF8_ACCEPT);
+
+	return codepoint;
+}
+/* }}} */
+
 /* {{{ get_next_char
  */
 static inline unsigned int get_next_char(
@@ -105,73 +135,14 @@ static inline unsigned int get_next_char(
 	switch (charset) {
 	case cs_utf_8:
 		{
-			/* We'll follow strategy 2. from section 3.6.1 of UTR #36:
-			 * "In a reported illegal byte sequence, do not include any
-			 *  non-initial byte that encodes a valid character or is a leading
-			 *  byte for a valid sequence." */
-			unsigned char c;
-			c = str[pos];
-			if (c < 0x80) {
-				this_char = c;
-				pos++;
-			} else if (c < 0xc2) {
-				MB_FAILURE(pos, 1);
-			} else if (c < 0xe0) {
-				if (!CHECK_LEN(pos, 2))
-					MB_FAILURE(pos, 1);
+			zend_bool valid = 0;
+			uint8_t bytes = 0;
 
-				if (!utf8_trail(str[pos + 1])) {
-					MB_FAILURE(pos, utf8_lead(str[pos + 1]) ? 1 : 2);
-				}
-				this_char = ((c & 0x1f) << 6) | (str[pos + 1] & 0x3f);
-				if (this_char < 0x80) { /* non-shortest form */
-					MB_FAILURE(pos, 2);
-				}
-				pos += 2;
-			} else if (c < 0xf0) {
-				size_t avail = str_len - pos;
-
-				if (avail < 3 ||
-						!utf8_trail(str[pos + 1]) || !utf8_trail(str[pos + 2])) {
-					if (avail < 2 || utf8_lead(str[pos + 1]))
-						MB_FAILURE(pos, 1);
-					else if (avail < 3 || utf8_lead(str[pos + 2]))
-						MB_FAILURE(pos, 2);
-					else
-						MB_FAILURE(pos, 3);
-				}
-
-				this_char = ((c & 0x0f) << 12) | ((str[pos + 1] & 0x3f) << 6) | (str[pos + 2] & 0x3f);
-				if (this_char < 0x800) { /* non-shortest form */
-					MB_FAILURE(pos, 3);
-				} else if (this_char >= 0xd800 && this_char <= 0xdfff) { /* surrogate */
-					MB_FAILURE(pos, 3);
-				}
-				pos += 3;
-			} else if (c < 0xf5) {
-				size_t avail = str_len - pos;
-
-				if (avail < 4 ||
-						!utf8_trail(str[pos + 1]) || !utf8_trail(str[pos + 2]) ||
-						!utf8_trail(str[pos + 3])) {
-					if (avail < 2 || utf8_lead(str[pos + 1]))
-						MB_FAILURE(pos, 1);
-					else if (avail < 3 || utf8_lead(str[pos + 2]))
-						MB_FAILURE(pos, 2);
-					else if (avail < 4 || utf8_lead(str[pos + 3]))
-						MB_FAILURE(pos, 3);
-					else
-						MB_FAILURE(pos, 4);
-				}
-				
-				this_char = ((c & 0x07) << 18) | ((str[pos + 1] & 0x3f) << 12) | ((str[pos + 2] & 0x3f) << 6) | (str[pos + 3] & 0x3f);
-				if (this_char < 0x10000 || this_char > 0x10FFFF) { /* non-shortest form or outside range */
-					MB_FAILURE(pos, 4);
-				}
-				pos += 4;
-			} else {
-				MB_FAILURE(pos, 1);
+			this_char = utf8_get_next_codepoint(str + pos, str_len - pos, &bytes, &valid);
+			if (!valid) {
+				MB_FAILURE(pos, bytes);
 			}
+			pos += bytes;
 		}
 		break;
 
@@ -343,18 +314,6 @@ static inline unsigned int get_next_char(
 
 	*cursor = pos;
   	return this_char;
-}
-/* }}} */
-
-/* {{{ php_next_utf8_char
- * Public interface for get_next_char used with UTF-8 */
- PHPAPI unsigned int php_next_utf8_char(
-		const unsigned char *str,
-		size_t str_len,
-		size_t *cursor,
-		int *status)
-{
-	return get_next_char(cs_utf_8, str, str_len, cursor, status);
 }
 /* }}} */
 

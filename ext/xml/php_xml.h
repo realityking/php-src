@@ -33,7 +33,7 @@ extern zend_module_entry xml_module_entry;
 #ifdef HAVE_XML 
 
 #include "ext/xml/expat_compat.h"
-
+#include "ext/utf8/utf8.h"
 
 #ifdef XML_UNICODE
 #error "UTF-16 Unicode support not implemented!"
@@ -92,8 +92,7 @@ typedef struct {
 
 typedef struct {
 	XML_Char *name;
-	char (*decoding_function)(unsigned short);
-	unsigned short (*encoding_function)(unsigned char);
+	void (*decoding_function)(const char8_t*, int, char **, int *);
 } xml_encoding;
 
 
@@ -129,13 +128,9 @@ PHP_FUNCTION(xml_get_current_byte_index);
 PHP_FUNCTION(xml_parser_free);
 PHP_FUNCTION(xml_parser_set_option);
 PHP_FUNCTION(xml_parser_get_option);
-PHP_FUNCTION(utf8_encode);
-PHP_FUNCTION(utf8_decode);
 PHP_FUNCTION(xml_parse_into_struct);
 
 PHPAPI char *_xml_zval_strdup(zval *val);
-PHPAPI char *xml_utf8_decode(const XML_Char *, int, int *, const XML_Char *);
-PHPAPI char *xml_utf8_encode(const char *s, int len, int *newlen, const XML_Char *encoding);
 
 #endif /* HAVE_LIBEXPAT */
 

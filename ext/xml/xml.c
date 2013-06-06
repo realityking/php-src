@@ -205,14 +205,6 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_xml_parser_get_option, 0, 0, 2)
 	ZEND_ARG_INFO(0, option)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_utf8_encode, 0, 0, 1)
-	ZEND_ARG_INFO(0, data)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_utf8_decode, 0, 0, 1)
-	ZEND_ARG_INFO(0, data)
-ZEND_END_ARG_INFO()
-
 const zend_function_entry xml_functions[] = {
 	PHP_FE(xml_parser_create,					arginfo_xml_parser_create)
 	PHP_FE(xml_parser_create_ns,				arginfo_xml_parser_create_ns)
@@ -236,8 +228,6 @@ const zend_function_entry xml_functions[] = {
 	PHP_FE(xml_parser_free, 					arginfo_xml_parser_free)
 	PHP_FE(xml_parser_set_option, 				arginfo_xml_parser_set_option)
 	PHP_FE(xml_parser_get_option,				arginfo_xml_parser_get_option)
-	PHP_FE(utf8_encode, 						arginfo_utf8_encode)
-	PHP_FE(utf8_decode, 						arginfo_utf8_decode)
 	PHP_FE_END
 };
 
@@ -274,10 +264,10 @@ zend_module_entry xml_module_entry = {
  * the encoding is currently done internally by expat/xmltok.
  */
 xml_encoding xml_encodings[] = {
-	{ "ISO-8859-1", xml_decode_iso_8859_1, xml_encode_iso_8859_1 },
-	{ "US-ASCII",   xml_decode_us_ascii,   xml_encode_us_ascii   },
-	{ "UTF-8",      NULL,                  NULL                  },
-	{ NULL,         NULL,                  NULL                  }
+	{ "ISO-8859-1", utf8_to_iso88591 },
+	{ "US-ASCII",   utf8_to_ascii    },
+	{ "UTF-8",      NULL,            },
+	{ NULL,         NULL,            }
 };
 
 static XML_Memory_Handling_Suite php_xml_mem_hdlrs;
@@ -369,52 +359,6 @@ PHP_MINFO_FUNCTION(xml)
 	php_info_print_table_row(2, "EXPAT Version", XML_ExpatVersion());
 #endif
 	php_info_print_table_end();
-}
-/* }}} */
-
-/* {{{ extension-internal functions */
-static zval *_xml_resource_zval(long value)
-{
-	zval *ret;
-	TSRMLS_FETCH();
-
-	MAKE_STD_ZVAL(ret);
-
-	Z_TYPE_P(ret) = IS_RESOURCE;
-	Z_LVAL_P(ret) = value;
-
-	zend_list_addref(value);
-
-	return ret;
-}
-
-static zval *_xml_string_zval(const char *str)
-{
-	zval *ret;
-	int len = strlen(str);
-	MAKE_STD_ZVAL(ret);
-
-	Z_TYPE_P(ret) = IS_STRING;
-	Z_STRLEN_P(ret) = len;
-	Z_STRVAL_P(ret) = estrndup(str, len);
-	return ret;
-}
-
-static zval *_xml_xmlchar_zval(const XML_Char *s, int len, const XML_Char *encoding)
-{
-	zval *ret;
-	MAKE_STD_ZVAL(ret);
-	
-	if (s == NULL) {
-		ZVAL_FALSE(ret);
-		return ret;
-	}
-	if (len == 0) {
-		len = _xml_xmlcharlen(s);
-	}
-	Z_TYPE_P(ret) = IS_STRING;
-	Z_STRVAL_P(ret) = xml_utf8_decode(s, len, &Z_STRLEN_P(ret), encoding);
-	return ret;
 }
 /* }}} */
 
@@ -563,34 +507,6 @@ static zval *xml_call_handler(xml_parser *parser, zval *handler, zend_function *
 }
 /* }}} */
 
-/* {{{ xml_encode_iso_8859_1() */
-inline static unsigned short xml_encode_iso_8859_1(unsigned char c)
-{
-	return (unsigned short)c;
-}
-/* }}} */
-
-/* {{{ xml_decode_iso_8859_1() */
-inline static char xml_decode_iso_8859_1(unsigned short c)
-{
-	return (char)(c > 0xff ? '?' : c);
-}
-/* }}} */
-
-/* {{{ xml_encode_us_ascii() */
-inline static unsigned short xml_encode_us_ascii(unsigned char c)
-{
-	return (unsigned short)c;
-}
-/* }}} */
-
-/* {{{ xml_decode_us_ascii() */
-inline static char xml_decode_us_ascii(unsigned short c)
-{
-	return (char)(c > 0x7f ? '?' : c);
-}
-/* }}} */
-
 /* {{{ xml_get_encoding() */
 static xml_encoding *xml_get_encoding(const XML_Char *name)
 {
@@ -606,67 +522,13 @@ static xml_encoding *xml_get_encoding(const XML_Char *name)
 }
 /* }}} */
 
-/* {{{ xml_utf8_encode */
-PHPAPI char *xml_utf8_encode(const char *s, int len, int *newlen, const XML_Char *encoding)
-{
-	int pos = len;
-	char *newbuf;
-	unsigned int c;
-	unsigned short (*encoder)(unsigned char) = NULL;
-	xml_encoding *enc = xml_get_encoding(encoding);
-
-	*newlen = 0;
-	if (enc) {
-		encoder = enc->encoding_function;
-	} else {
-		/* If the target encoding was unknown, fail */
-		return NULL;
-	}
-	if (encoder == NULL) {
-		/* If no encoder function was specified, return the data as-is.
-		 */
-		newbuf = emalloc(len + 1);
-		memcpy(newbuf, s, len);
-		*newlen = len;
-		newbuf[*newlen] = '\0';
-		return newbuf;
-	}
-	/* This is the theoretical max (will never get beyond len * 2 as long
-	 * as we are converting from single-byte characters, though) */
-	newbuf = safe_emalloc(len, 4, 1);
-	while (pos > 0) {
-		c = encoder ? encoder((unsigned char)(*s)) : (unsigned short)(*s);
-		if (c < 0x80) {
-			newbuf[(*newlen)++] = (char) c;
-		} else if (c < 0x800) {
-			newbuf[(*newlen)++] = (0xc0 | (c >> 6));
-			newbuf[(*newlen)++] = (0x80 | (c & 0x3f));
-		} else if (c < 0x10000) {
-			newbuf[(*newlen)++] = (0xe0 | (c >> 12));
-			newbuf[(*newlen)++] = (0xc0 | ((c >> 6) & 0x3f));
-			newbuf[(*newlen)++] = (0x80 | (c & 0x3f));
-		} else if (c < 0x200000) {
-			newbuf[(*newlen)++] = (0xf0 | (c >> 18));
-			newbuf[(*newlen)++] = (0xe0 | ((c >> 12) & 0x3f));
-			newbuf[(*newlen)++] = (0xc0 | ((c >> 6) & 0x3f));
-			newbuf[(*newlen)++] = (0x80 | (c & 0x3f));
-		}
-		pos--;
-		s++;
-	}
-	newbuf[*newlen] = 0;
-	newbuf = erealloc(newbuf, (*newlen)+1);
-	return newbuf;
-}
-/* }}} */
-
 /* {{{ xml_utf8_decode */
-PHPAPI char *xml_utf8_decode(const XML_Char *s, int len, int *newlen, const XML_Char *encoding)
+char *xml_utf8_decode(const XML_Char *s, int len, int *newlen, const XML_Char *encoding)
 {
 	size_t pos = 0;
-	char *newbuf = emalloc(len + 1);
+	char *newbuf = NULL;
 	unsigned int c;
-	char (*decoder)(unsigned short) = NULL;
+	void (*decoder)(const char8_t*, int, char **, int *) = NULL;
 	xml_encoding *enc = xml_get_encoding(encoding);
 
 	*newlen = 0;
@@ -677,28 +539,61 @@ PHPAPI char *xml_utf8_decode(const XML_Char *s, int len, int *newlen, const XML_
 		/* If the target encoding was unknown, or no decoder function
 		 * was specified, return the UTF-8-encoded data as-is.
 		 */
+		newbuf = (char*)emalloc(len + 1);
 		memcpy(newbuf, s, len);
 		*newlen = len;
-		newbuf[*newlen] = '\0';
-		return newbuf;
+	} else {
+		decoder(s, len, &newbuf, newlen);
 	}
 
-	while (pos < (size_t)len) {
-		int status = FAILURE;
-		c = php_next_utf8_char((const unsigned char*)s, (size_t) len, &pos, &status);
-
-		if (status == FAILURE || c > 0xFFU) {
-			c = '?';
-		}
-
-		newbuf[*newlen] = decoder ? decoder(c) : c;
-		++*newlen;
-	}
-	if (*newlen < len) {
-		newbuf = erealloc(newbuf, *newlen + 1);
-	}
 	newbuf[*newlen] = '\0';
 	return newbuf;
+}
+/* }}} */
+
+/* {{{ extension-internal functions */
+static zval *_xml_resource_zval(long value)
+{
+	zval *ret;
+	TSRMLS_FETCH();
+
+	MAKE_STD_ZVAL(ret);
+
+	Z_TYPE_P(ret) = IS_RESOURCE;
+	Z_LVAL_P(ret) = value;
+
+	zend_list_addref(value);
+
+	return ret;
+}
+
+static zval *_xml_string_zval(const char *str)
+{
+	zval *ret;
+	int len = strlen(str);
+	MAKE_STD_ZVAL(ret);
+
+	Z_TYPE_P(ret) = IS_STRING;
+	Z_STRLEN_P(ret) = len;
+	Z_STRVAL_P(ret) = estrndup(str, len);
+	return ret;
+}
+
+static zval *_xml_xmlchar_zval(const XML_Char *s, int len, const XML_Char *encoding)
+{
+	zval *ret;
+	MAKE_STD_ZVAL(ret);
+	
+	if (s == NULL) {
+		ZVAL_FALSE(ret);
+		return ret;
+	}
+	if (len == 0) {
+		len = _xml_xmlcharlen(s);
+	}
+	Z_TYPE_P(ret) = IS_STRING;
+	Z_STRVAL_P(ret) = xml_utf8_decode(s, len, &Z_STRLEN_P(ret), encoding);
+	return ret;
 }
 /* }}} */
 
@@ -1674,46 +1569,6 @@ PHP_FUNCTION(xml_parser_get_option)
 	}
 
 	RETVAL_FALSE;	/* never reached */
-}
-/* }}} */
-
-/* {{{ proto string utf8_encode(string data) 
-   Encodes an ISO-8859-1 string to UTF-8 */
-PHP_FUNCTION(utf8_encode)
-{
-	char *arg;
-	XML_Char *encoded;
-	int arg_len, len;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	encoded = xml_utf8_encode(arg, arg_len, &len, "ISO-8859-1");
-	if (encoded == NULL) {
-		RETURN_FALSE;
-	}
-	RETVAL_STRINGL(encoded, len, 0);
-}
-/* }}} */
-
-/* {{{ proto string utf8_decode(string data) 
-   Converts a UTF-8 encoded string to ISO-8859-1 */
-PHP_FUNCTION(utf8_decode)
-{
-	char *arg;
-	XML_Char *decoded;
-	int arg_len, len;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	decoded = xml_utf8_decode(arg, arg_len, &len, "ISO-8859-1");
-	if (decoded == NULL) {
-		RETURN_FALSE;
-	}
-	RETVAL_STRINGL(decoded, len, 0);
 }
 /* }}} */
 
