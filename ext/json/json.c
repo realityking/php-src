@@ -26,6 +26,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "ext/standard/html.h"
+#include "ext/utf8/utf8.h"
 #include "ext/standard/php_smart_str.h"
 #include "JSON_parser.h"
 #include "php_json.h"
@@ -358,50 +359,13 @@ static void json_encode_array(smart_str *buf, zval **val, int options TSRMLS_DC)
 }
 /* }}} */
 
-static int json_utf8_to_utf16(unsigned short *utf16, char utf8[], int len) /* {{{ */
-{
-	size_t pos = 0, us;
-	int j, status;
-
-	if (utf16) {
-		/* really convert the utf8 string */
-		for (j=0 ; pos < len ; j++) {
-			us = php_next_utf8_char((const unsigned char *)utf8, len, &pos, &status);
-			if (status != SUCCESS) {
-				return -1;
-			}
-			/* From http://en.wikipedia.org/wiki/UTF16 */
-			if (us >= 0x10000) {
-				us -= 0x10000;
-				utf16[j++] = (unsigned short)((us >> 10) | 0xd800);
-				utf16[j] = (unsigned short)((us & 0x3ff) | 0xdc00);
-			} else {
-				utf16[j] = (unsigned short)us;
-			}
-		}
-	} else {
-		/* Only check if utf8 string is valid, and compute utf16 lenght */
-		for (j=0 ; pos < len ; j++) {
-			us = php_next_utf8_char((const unsigned char *)utf8, len, &pos, &status);
-			if (status != SUCCESS) {
-				return -1;
-			}
-			if (us >= 0x10000) {
-				j++;
-			}
-		}
-	}
-	return j;
-}
-/* }}} */
-
-
 static void json_escape_string(smart_str *buf, char *s, int len, int options TSRMLS_DC) /* {{{ */
 {
 	int pos = 0, ulen = 0;
 	unsigned short us;
-	unsigned short *utf16;
+	char16_t *utf16 = NULL;
 	size_t newlen;
+	zend_bool valid = 0;
 
 	if (len == 0) {
 		smart_str_appendl(buf, "\"\"", 2);
@@ -432,22 +396,28 @@ static void json_escape_string(smart_str *buf, char *s, int len, int options TSR
 
 	}
 
-	utf16 = (options & PHP_JSON_UNESCAPED_UNICODE) ? NULL : (unsigned short *) safe_emalloc(len, sizeof(unsigned short), 0);
-	ulen = json_utf8_to_utf16(utf16, s, len);
-	if (ulen <= 0) {
-		if (utf16) {
-			efree(utf16);
-		}
-		if (ulen < 0) {
-			JSON_G(error_code) = PHP_JSON_ERROR_UTF8;
-			smart_str_appendl(buf, "null", 4);
-		} else {
-			smart_str_appendl(buf, "\"\"", 2);
-		}
+	if (len == 0) {
+		smart_str_appendl(buf, "\"\"", 2);
 		return;
 	}
-	if (!(options & PHP_JSON_UNESCAPED_UNICODE)) {
-		len = ulen;
+	if (options & PHP_JSON_UNESCAPED_UNICODE) {
+		valid = utf8_is_valid((char8_t*)s, len);
+		if (!valid) {
+			JSON_G(error_code) = PHP_JSON_ERROR_UTF8;
+			smart_str_appendl(buf, "null", 4);
+			return;
+		}
+
+	} else {
+		utf8_to_utf16((char8_t*)s, len, &utf16, &ulen, &valid);
+
+		if (!valid) {
+			efree(utf16);
+			JSON_G(error_code) = PHP_JSON_ERROR_UTF8;
+			smart_str_appendl(buf, "null", 4);
+			return;
+		}
+		len = ulen / 2;
 	}
 
 	/* pre-allocate for string length plus 2 quotes */
@@ -665,25 +635,22 @@ PHP_JSON_API void php_json_decode_ex(zval *return_value, char *str, int str_len,
 {
 	int utf16_len;
 	zval *z;
-	unsigned short *utf16;
+	char16_t *utf16;
 	JSON_parser jp;
-
-	utf16 = (unsigned short *) safe_emalloc((str_len+1), sizeof(unsigned short), 1);
-
-	utf16_len = json_utf8_to_utf16(utf16, str, str_len);
-	if (utf16_len <= 0) {
-		if (utf16) {
-			efree(utf16);
-		}
-		JSON_G(error_code) = PHP_JSON_ERROR_UTF8;
-		RETURN_NULL();
-	}
+	zend_bool valid = 0;
 
 	if (depth <= 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Depth must be greater than zero");
-		efree(utf16);
 		RETURN_NULL();
 	}
+
+	utf8_to_utf16(str, str_len, &utf16, &utf16_len, &valid);
+	if (!valid) {
+		efree(utf16);
+		JSON_G(error_code) = PHP_JSON_ERROR_UTF8;
+		RETURN_NULL();
+	}
+	utf16_len = utf16_len / 2;
 
 	ALLOC_INIT_ZVAL(z);
 	jp = new_JSON_parser(depth);

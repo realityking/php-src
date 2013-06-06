@@ -56,6 +56,8 @@
 
 #include <zend_hash.h>
 #include "html_tables.h"
+#include "ext/utf8/utf8.h"
+#include "ext/utf8/utf8decode.h"
 
 /* Macro for disabling flag of translation of non-basic entities where this isn't supported.
  * Not appropriate for html_entity_decode/htmlspecialchars_decode */
@@ -84,9 +86,240 @@
 #define sjis_lead(c) ((c) != 0x80 && (c) != 0xA0 && (c) < 0xFD)
 #define sjis_trail(c) ((c) >= 0x40  && (c) != 0x7F && (c) < 0xFD)
 
+/* {{{ utf8_get_next_codepoint
+ */
+static inline uint32_t
+utf8_get_next_codepoint(const char8_t *str, size_t str_size, uint8_t *bytes, zend_bool *valid)
+{
+	uint32_t codepoint;
+	uint32_t current = UTF8_ACCEPT, prev = UTF8_ACCEPT;
+	uint8_t  count = 1;
+
+	for (; count <= str_size; count++) {
+		prev = current;
+		utf8_decode(&current, &codepoint, *str++);
+		if (current == UTF8_ACCEPT) {
+			break;
+		} else if (current == UTF8_REJECT) {
+			if (prev != UTF8_ACCEPT)
+				count--;
+			break;
+		}
+	}
+
+	*bytes = count;
+	*valid = (current == UTF8_ACCEPT);
+
+	return codepoint;
+}
+/* }}} */
+
 /* {{{ get_next_char
  */
 static inline unsigned int get_next_char(
+		enum entity_charset charset,
+		const unsigned char *str,
+		size_t str_len,
+		size_t *cursor,
+		int *status)
+{
+	size_t pos = *cursor;
+	unsigned int this_char = 0;
+
+	*status = SUCCESS;
+	assert(pos <= str_len);
+
+	if (!CHECK_LEN(pos, 1))
+		MB_FAILURE(pos, 1);
+
+	switch (charset) {
+	case cs_utf_8:
+		{
+			zend_bool valid = 0;
+			uint8_t bytes = 0;
+
+			this_char = utf8_get_next_codepoint(str + pos, str_len - pos, &bytes, &valid);
+			if (!valid) {
+				MB_FAILURE(pos, bytes);
+			}
+			pos += bytes;
+		}
+		break;
+
+	case cs_big5:
+		/* reference http://demo.icu-project.org/icu-bin/convexp?conv=big5 */
+		{
+			unsigned char c = str[pos];
+			if (c >= 0x81 && c <= 0xFE) {
+				unsigned char next;
+				if (!CHECK_LEN(pos, 2))
+					MB_FAILURE(pos, 1);
+
+				next = str[pos + 1];
+
+				if ((next >= 0x40 && next <= 0x7E) ||
+						(next >= 0xA1 && next <= 0xFE)) {
+					this_char = (c << 8) | next;
+				} else {
+					MB_FAILURE(pos, 1);
+				}
+				pos += 2;
+			} else {
+				this_char = c;
+				pos += 1;
+			}
+		}
+		break;
+
+	case cs_big5hkscs:
+		{
+			unsigned char c = str[pos];
+			if (c >= 0x81 && c <= 0xFE) {
+				unsigned char next;
+				if (!CHECK_LEN(pos, 2))
+					MB_FAILURE(pos, 1);
+
+				next = str[pos + 1];
+
+				if ((next >= 0x40 && next <= 0x7E) ||
+						(next >= 0xA1 && next <= 0xFE)) {
+					this_char = (c << 8) | next;
+				} else if (next != 0x80 && next != 0xFF) {
+					MB_FAILURE(pos, 1);
+				} else {
+					MB_FAILURE(pos, 2);
+				}
+				pos += 2;
+			} else {
+				this_char = c;
+				pos += 1;
+			}
+		}
+		break;
+
+	case cs_gb2312: /* EUC-CN */
+		{
+			unsigned char c = str[pos];
+			if (c >= 0xA1 && c <= 0xFE) {
+				unsigned char next;
+				if (!CHECK_LEN(pos, 2))
+					MB_FAILURE(pos, 1);
+
+				next = str[pos + 1];
+
+				if (gb2312_trail(next)) {
+					this_char = (c << 8) | next;
+				} else if (gb2312_lead(next)) {
+					MB_FAILURE(pos, 1);
+				} else {
+					MB_FAILURE(pos, 2);
+				}
+				pos += 2;
+			} else if (gb2312_lead(c)) {
+				this_char = c;
+				pos += 1;
+			} else {
+				MB_FAILURE(pos, 1);
+			}
+		}
+		break;
+
+	case cs_sjis:
+		{
+			unsigned char c = str[pos];
+			if ((c >= 0x81 && c <= 0x9F) || (c >= 0xE0 && c <= 0xFC)) {
+				unsigned char next;
+				if (!CHECK_LEN(pos, 2))
+					MB_FAILURE(pos, 1);
+
+				next = str[pos + 1];
+
+				if (sjis_trail(next)) {
+					this_char = (c << 8) | next;
+				} else if (sjis_lead(next)) {
+					MB_FAILURE(pos, 1);
+				} else {
+					MB_FAILURE(pos, 2);
+				}
+				pos += 2;
+			} else if (c < 0x80 || (c >= 0xA1 && c <= 0xDF)) {
+				this_char = c;
+				pos += 1;
+			} else {
+				MB_FAILURE(pos, 1);
+			}
+		}
+		break;
+
+	case cs_eucjp:
+		{
+			unsigned char c = str[pos];
+
+			if (c >= 0xA1 && c <= 0xFE) {
+				unsigned next;
+				if (!CHECK_LEN(pos, 2))
+					MB_FAILURE(pos, 1);
+				next = str[pos + 1];
+
+				if (next >= 0xA1 && next <= 0xFE) {
+					/* this a jis kanji char */
+					this_char = (c << 8) | next;
+				} else {
+					MB_FAILURE(pos, (next != 0xA0 && next != 0xFF) ? 1 : 2);
+				}
+				pos += 2;
+			} else if (c == 0x8E) {
+				unsigned next;
+				if (!CHECK_LEN(pos, 2))
+					MB_FAILURE(pos, 1);
+
+				next = str[pos + 1];
+				if (next >= 0xA1 && next <= 0xDF) {
+					/* JIS X 0201 kana */
+					this_char = (c << 8) | next;
+				} else {
+					MB_FAILURE(pos, (next != 0xA0 && next != 0xFF) ? 1 : 2);
+				}
+				pos += 2;
+			} else if (c == 0x8F) {
+				size_t avail = str_len - pos;
+
+				if (avail < 3 || !(str[pos + 1] >= 0xA1 && str[pos + 1] <= 0xFE) ||
+						!(str[pos + 2] >= 0xA1 && str[pos + 2] <= 0xFE)) {
+					if (avail < 2 || (str[pos + 1] != 0xA0 && str[pos + 1] != 0xFF))
+						MB_FAILURE(pos, 1);
+					else if (avail < 3 || (str[pos + 2] != 0xA0 && str[pos + 2] != 0xFF))
+						MB_FAILURE(pos, 2);
+					else
+						MB_FAILURE(pos, 3);
+				} else {
+					/* JIS X 0212 hojo-kanji */
+					this_char = (c << 16) | (str[pos + 1] << 8) | str[pos + 2];
+				}
+				pos += 3;
+			} else if (c != 0xA0 && c != 0xFF) {
+				/* character encoded in 1 code unit */
+				this_char = c;
+				pos += 1;
+			} else {
+				MB_FAILURE(pos, 1);
+			}
+		}
+		break;
+	default:
+		/* single-byte charsets */
+		this_char = str[pos++];
+		break;
+	}
+
+	*cursor = pos;
+  	return this_char;
+}
+/* }}} */
+
+/* {{{ get_next_char
+ */
+static inline unsigned int get_next_char_old(
 		enum entity_charset charset,
 		const unsigned char *str,
 		size_t str_len,
@@ -355,6 +588,18 @@ static inline unsigned int get_next_char(
 		int *status)
 {
 	return get_next_char(cs_utf_8, str, str_len, cursor, status);
+}
+/* }}} */
+
+/* {{{ php_next_utf8_char
+ * Public interface for get_next_char used with UTF-8 */
+ PHPAPI unsigned int php_next_utf8_char_old(
+		const unsigned char *str,
+		size_t str_len,
+		size_t *cursor,
+		int *status)
+{
+	return get_next_char_old(cs_utf_8, str, str_len, cursor, status);
 }
 /* }}} */
 

@@ -205,14 +205,6 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_xml_parser_get_option, 0, 0, 2)
 	ZEND_ARG_INFO(0, option)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_utf8_encode, 0, 0, 1)
-	ZEND_ARG_INFO(0, data)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_utf8_decode, 0, 0, 1)
-	ZEND_ARG_INFO(0, data)
-ZEND_END_ARG_INFO()
-
 const zend_function_entry xml_functions[] = {
 	PHP_FE(xml_parser_create,					arginfo_xml_parser_create)
 	PHP_FE(xml_parser_create_ns,				arginfo_xml_parser_create_ns)
@@ -236,8 +228,6 @@ const zend_function_entry xml_functions[] = {
 	PHP_FE(xml_parser_free, 					arginfo_xml_parser_free)
 	PHP_FE(xml_parser_set_option, 				arginfo_xml_parser_set_option)
 	PHP_FE(xml_parser_get_option,				arginfo_xml_parser_get_option)
-	PHP_FE(utf8_encode, 						arginfo_utf8_encode)
-	PHP_FE(utf8_decode, 						arginfo_utf8_decode)
 	PHP_FE_END
 };
 
@@ -662,6 +652,37 @@ PHPAPI char *xml_utf8_encode(const char *s, int len, int *newlen, const XML_Char
 
 /* {{{ xml_utf8_decode */
 PHPAPI char *xml_utf8_decode(const XML_Char *s, int len, int *newlen, const XML_Char *encoding)
+{
+	size_t pos = 0;
+	char *newbuf = NULL;
+	unsigned int c;
+	char (*decoder)(unsigned short) = NULL;
+	xml_encoding *enc = xml_get_encoding(encoding);
+
+	*newlen = 0;
+	/* if (enc) {
+		decoder = enc->decoding_function;
+	} */
+	if (enc->name == NULL || strcasecmp(enc->name, "UTF-8") == 0) {
+		/* If the target encoding was unknown, or no decoder function
+		 * was specified, return the UTF-8-encoded data as-is.
+		 */
+		newbuf = (char*)emalloc(len + 1);
+		memcpy(newbuf, s, len);
+		*newlen = len;
+	} else if (strcasecmp(enc->name, "US-ASCII") == 0) {
+		utf8_to_ascii(s, len, &newbuf, newlen);
+	} else if (strcasecmp(enc->name, "ISO-8859-1") == 0) {
+		utf8_to_iso88591(s, len, &newbuf, newlen);
+	}
+
+	newbuf[*newlen] = '\0';
+	return newbuf;
+}
+/* }}} */
+
+/* {{{ xml_utf8_decode */
+PHPAPI char *xml_utf8_decode_old(const XML_Char *s, int len, int *newlen, const XML_Char *encoding)
 {
 	size_t pos = 0;
 	char *newbuf = emalloc(len + 1);
@@ -1674,46 +1695,6 @@ PHP_FUNCTION(xml_parser_get_option)
 	}
 
 	RETVAL_FALSE;	/* never reached */
-}
-/* }}} */
-
-/* {{{ proto string utf8_encode(string data) 
-   Encodes an ISO-8859-1 string to UTF-8 */
-PHP_FUNCTION(utf8_encode)
-{
-	char *arg;
-	XML_Char *encoded;
-	int arg_len, len;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	encoded = xml_utf8_encode(arg, arg_len, &len, "ISO-8859-1");
-	if (encoded == NULL) {
-		RETURN_FALSE;
-	}
-	RETVAL_STRINGL(encoded, len, 0);
-}
-/* }}} */
-
-/* {{{ proto string utf8_decode(string data) 
-   Converts a UTF-8 encoded string to ISO-8859-1 */
-PHP_FUNCTION(utf8_decode)
-{
-	char *arg;
-	XML_Char *decoded;
-	int arg_len, len;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	decoded = xml_utf8_decode(arg, arg_len, &len, "ISO-8859-1");
-	if (decoded == NULL) {
-		RETURN_FALSE;
-	}
-	RETVAL_STRINGL(decoded, len, 0);
 }
 /* }}} */
 

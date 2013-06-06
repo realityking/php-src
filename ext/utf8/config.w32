@@ -1,0 +1,6 @@
+// $Id$
+// vim:ft=javascript
+
+	EXTENSION("utf8", "utf8.c utf8tools.c");
+
+
