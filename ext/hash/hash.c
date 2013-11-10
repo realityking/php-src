@@ -37,6 +37,10 @@ HashTable php_hash_hashtable;
 # define DEFAULT_CONTEXT NULL
 #endif
 
+#ifndef MAX
+# define MAX(a,b) ((a)<(b)?(b):(a))
+#endif
+
 #ifdef PHP_MHASH_BC
 struct mhash_bc_entry {
 	char *mhash_name;
@@ -729,6 +733,34 @@ PHP_FUNCTION(hash_pbkdf2)
 }
 /* }}} */
 
+/* {{{ proto bool hash_compare(string known_string, string user_string)
+   Compares two strings using the same time whether they're equal or not */
+PHP_FUNCTION(hash_compare)
+{
+	char *known_str, *user_str;
+	int known_len, user_len, mod_len;
+	int result, j;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &known_str, &known_len, &user_str, &user_len) == FAILURE) {
+		return;
+	}
+
+	/**
+	 * If known_string has a length of 0 we set the length to 1,
+	 * this will cause us to compare all bytes of userString with the null byte which fails
+	 */
+	mod_len = MAX(known_len, 1);
+
+	/* This is security sensitive code. Do not optimize this for speed. */
+	result = known_len - user_len;
+	for (j = 0; j < user_len; j++) {
+		result |= known_str[j % mod_len] ^ user_str[j];
+	}
+
+	RETURN_BOOL(0 == result);
+}
+/* }}} */
+
 /* Module Housekeeping */
 
 static void php_hash_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC) /* {{{ */
@@ -1151,6 +1183,11 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_hash_pbkdf2, 0, 0, 4)
 	ZEND_ARG_INFO(0, raw_output)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO(arginfo_hash_compare, 0)
+	ZEND_ARG_INFO(0, known_string)
+	ZEND_ARG_INFO(0, user_string)
+ZEND_END_ARG_INFO()
+
 /* BC Land */
 #ifdef PHP_MHASH_BC
 ZEND_BEGIN_ARG_INFO(arginfo_mhash_get_block_size, 0)
@@ -1198,6 +1235,7 @@ const zend_function_entry hash_functions[] = {
 
 	PHP_FE(hash_algos,								arginfo_hash_algos)
 	PHP_FE(hash_pbkdf2,								arginfo_hash_pbkdf2)
+	PHP_FE(hash_compare,							arginfo_hash_compare)
 
 	/* BC Land */
 #ifdef PHP_HASH_MD5_NOT_IN_CORE
