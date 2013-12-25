@@ -746,7 +746,8 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_forward_static_call_array, 0, 0, 2)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_register_shutdown_function, 0)
-	ZEND_ARG_INFO(0, function_name)
+	ZEND_ARG_CALLABLE_INFO(0, function_name, 0)
+	ZEND_ARG_VARIADIC_INFO(0, parameters)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_highlight_file, 0, 0, 1)
@@ -5116,7 +5117,6 @@ void php_free_shutdown_functions(TSRMLS_D) /* {{{ */
 PHP_FUNCTION(register_shutdown_function)
 {
 	php_shutdown_function_entry shutdown_function_entry;
-	char *callback_name = NULL;
 	int i;
 
 	shutdown_function_entry.arg_count = ZEND_NUM_ARGS();
@@ -5132,25 +5132,15 @@ PHP_FUNCTION(register_shutdown_function)
 		RETURN_FALSE;
 	}
 
-	/* Prevent entering of anything but valid callback (syntax check only!) */
-	if (!zend_is_callable(shutdown_function_entry.arguments[0], 0, &callback_name TSRMLS_CC)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid shutdown callback '%s' passed", callback_name);
-		efree(shutdown_function_entry.arguments);
-		RETVAL_FALSE;
-	} else {
-		if (!BG(user_shutdown_function_names)) {
-			ALLOC_HASHTABLE(BG(user_shutdown_function_names));
-			zend_hash_init(BG(user_shutdown_function_names), 0, NULL, (void (*)(void *)) user_shutdown_function_dtor, 0);
-		}
-
-		for (i = 0; i < shutdown_function_entry.arg_count; i++) {
-			Z_ADDREF_P(shutdown_function_entry.arguments[i]);
-		}
-		zend_hash_next_index_insert(BG(user_shutdown_function_names), &shutdown_function_entry, sizeof(php_shutdown_function_entry), NULL);
+	if (!BG(user_shutdown_function_names)) {
+		ALLOC_HASHTABLE(BG(user_shutdown_function_names));
+		zend_hash_init(BG(user_shutdown_function_names), 0, NULL, (void (*)(void *)) user_shutdown_function_dtor, 0);
 	}
-	if (callback_name) {
-		efree(callback_name);
+	for (i = 0; i < shutdown_function_entry.arg_count; i++) {
+		Z_ADDREF_P(shutdown_function_entry.arguments[i]);
+		Z_ADDREF_P(shutdown_function_entry.arguments[i]);
 	}
+	zend_hash_next_index_insert(BG(user_shutdown_function_names), &shutdown_function_entry, sizeof(php_shutdown_function_entry), NULL);
 }
 /* }}} */
 
