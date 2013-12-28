@@ -296,11 +296,11 @@ ZEND_BEGIN_ARG_INFO(arginfo_key, 0)
 	ZEND_ARG_INFO(ZEND_SEND_PREFER_REF, arg)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_min, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO(arginfo_min, 0)
 	ZEND_ARG_VARIADIC_INFO(0, args)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_max, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO(arginfo_max, 0)
 	ZEND_ARG_VARIADIC_INFO(0, args)
 ZEND_END_ARG_INFO()
 
@@ -392,23 +392,19 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_array_slice, 0, 0, 2)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_merge, 0, 0, 2)
-	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_merge_recursive, 0, 0, 2)
-	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_replace, 0, 0, 2)
-	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_replace_recursive, 0, 0, 2)
-	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_keys, 0, 0, 1)
@@ -457,7 +453,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_intersect_key, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg1, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_intersect_ukey, 0)
@@ -468,7 +464,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_intersect, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg1, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_uintersect, 0)
@@ -479,7 +475,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_intersect_assoc, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg1, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_uintersect_assoc, 0)
@@ -503,7 +499,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_diff_key, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg1, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_diff_ukey, 0)
@@ -514,7 +510,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_diff, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg1, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_udiff, 0)
@@ -525,7 +521,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_diff_assoc, 0, 0, 2)
 	ZEND_ARG_INFO(0, arr1) /* ARRAY_INFO(0, arg1, 0) */
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_diff_uassoc, 0)
@@ -584,7 +580,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_array_map, 0, 0, 2)
 	ZEND_ARG_INFO(0, callback)
-	ZEND_ARG_VARIADIC_INFO(0, arrays)
+	ZEND_ARG_VARIADIC_INFO(0, arrays) /* VARIADIC_ARRAY_INFO(0, arrays, 0) */
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_array_key_exists, 0)
@@ -1353,7 +1349,7 @@ ZEND_END_ARG_INFO()
 /* {{{ formatted_print.c */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_sprintf, 0, 0, 2)
 	ZEND_ARG_INFO(0, format)
-	ZEND_ARG_VARIADIC_INFO(0, args)
+	ZEND_ARG_VARIADIC_INFO(0, parameters)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_vsprintf, 0)
@@ -1363,7 +1359,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_printf, 0, 0, 1)
 	ZEND_ARG_INFO(0, format)
-	ZEND_ARG_VARIADIC_INFO(0, args)
+	ZEND_ARG_VARIADIC_INFO(0, parameters)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_vprintf, 0)
@@ -1374,7 +1370,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_fprintf, 0, 0, 2)
 	ZEND_ARG_INFO(0, stream)
 	ZEND_ARG_INFO(0, format)
-	ZEND_ARG_VARIADIC_INFO(0, args)
+	ZEND_ARG_VARIADIC_INFO(0, parameters)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_vfprintf, 0)
@@ -1796,7 +1792,7 @@ ZEND_END_ARG_INFO()
 /* {{{ pack.c */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_pack, 0, 0, 2)
 	ZEND_ARG_INFO(0, format)
-	ZEND_ARG_VARIADIC_INFO(0, args)
+	ZEND_ARG_VARIADIC_INFO(0, data)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_unpack, 0)
