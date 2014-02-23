@@ -1896,16 +1896,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_srand, 0, 0, 0)
 	ZEND_ARG_INFO(0, seed)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_mt_srand, 0, 0, 0)
-	ZEND_ARG_INFO(0, seed)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_INFO_EX(arginfo_rand, 0, 0, 0)
-	ZEND_ARG_INFO(0, min)
-	ZEND_ARG_INFO(0, max)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_mt_rand, 0, 0, 0)
 	ZEND_ARG_INFO(0, min)
 	ZEND_ARG_INFO(0, max)
 ZEND_END_ARG_INFO()
@@ -1913,8 +1904,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO(arginfo_getrandmax, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO(arginfo_mt_getrandmax, 0)
-ZEND_END_ARG_INFO()
 /* }}} */
 /* {{{ sha1.c */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_sha1, 0, 0, 1)
@@ -2834,10 +2823,10 @@ const zend_function_entry basic_functions[] = { /* {{{ */
 
 	PHP_FE(rand,															arginfo_rand)
 	PHP_FE(srand,															arginfo_srand)
-	PHP_FE(getrandmax,													arginfo_getrandmax)
-	PHP_FE(mt_rand,														arginfo_mt_rand)
-	PHP_FE(mt_srand,														arginfo_mt_srand)
-	PHP_FE(mt_getrandmax,													arginfo_mt_getrandmax)
+	PHP_FE(getrandmax,														arginfo_getrandmax)
+	PHP_FALIAS(mt_rand, rand,												arginfo_rand)
+	PHP_FALIAS(mt_srand, srand,												arginfo_srand)
+	PHP_FALIAS(mt_getrandmax, getrandmax,									arginfo_getrandmax)
 
 #if HAVE_GETSERVBYNAME
 	PHP_FE(getservbyname,													arginfo_getservbyname)

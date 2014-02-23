@@ -232,22 +232,6 @@ PHP_FUNCTION(srand)
 {
 	long seed = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &seed) == FAILURE)
-		return;
-
-	if (ZEND_NUM_ARGS() == 0)
-		seed = GENERATE_SEED();
-
-	php_srand(seed TSRMLS_CC);
-}
-/* }}} */
-
-/* {{{ proto void mt_srand([int seed])
-   Seeds Mersenne Twister random number generator */
-PHP_FUNCTION(mt_srand)
-{
-	long seed = 0;
-
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &seed) == FAILURE) 
 		return;
 
@@ -294,27 +278,6 @@ PHP_FUNCTION(rand)
 	long number;
 	int  argc = ZEND_NUM_ARGS();
 
-	if (argc != 0 && zend_parse_parameters(argc TSRMLS_CC, "ll", &min, &max) == FAILURE)
-		return;
-
-	number = php_rand(TSRMLS_C);
-	if (argc == 2) {
-		RAND_RANGE(number, min, max, PHP_RAND_MAX);
-	}
-
-	RETURN_LONG(number);
-}
-/* }}} */
-
-/* {{{ proto int mt_rand([int min, int max])
-   Returns a random number from Mersenne Twister */
-PHP_FUNCTION(mt_rand)
-{
-	long min;
-	long max;
-	long number;
-	int  argc = ZEND_NUM_ARGS();
-
 	if (argc != 0) {
 		if (zend_parse_parameters(argc TSRMLS_CC, "ll", &min, &max) == FAILURE) {
 			return;
@@ -348,18 +311,6 @@ PHP_FUNCTION(mt_rand)
 /* {{{ proto int getrandmax(void)
    Returns the maximum value a random number can have */
 PHP_FUNCTION(getrandmax)
-{
-	if (zend_parse_parameters_none() == FAILURE) {
-		return;
-	}
-
-	RETURN_LONG(PHP_RAND_MAX);
-}
-/* }}} */
-
-/* {{{ proto int mt_getrandmax(void)
-   Returns the maximum value a random number from Mersenne Twister can have */
-PHP_FUNCTION(mt_getrandmax)
 {
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
