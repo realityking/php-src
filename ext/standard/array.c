@@ -4034,13 +4034,17 @@ PHP_FUNCTION(array_rand)
 		array_init_size(return_value, num_req);
 	}
 
+	if (!BG(mt_rand_is_seeded)) {
+		php_mt_srand(GENERATE_SEED() TSRMLS_CC);
+	}
+
 	/* We can't use zend_hash_index_find() because the array may have string keys or gaps. */
 	zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(input), &pos);
 	while (num_req && (key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(input), &string_key, &string_key_len, &num_key, 0, &pos)) != HASH_KEY_NON_EXISTENT) {
 
-		randval = php_rand(TSRMLS_C);
+		randval = (long)php_mt_rand(TSRMLS_C);
 
-		if ((double) (randval / (PHP_RAND_MAX + 1.0)) < (double) num_req / (double) num_avail) {
+		if ((double) (randval / (PHP_MT_RAND_MAX + 1.0)) < (double) num_req / (double) num_avail) {
 			/* If we are returning a single result, just do it. */
 			if (Z_TYPE_P(return_value) != IS_ARRAY) {
 				if (key_type == HASH_KEY_IS_STRING) {
