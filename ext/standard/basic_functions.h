@@ -191,8 +191,7 @@ typedef struct _php_basic_globals {
 
 	/* rand.c */
 	php_uint32   state[MT_N+1];  /* state vector + 1 extra to not violate ANSI C */
-	php_uint32   *next;       /* next random value is computed from here */
-	int      left;        /* can *next++ this many times before reloading */
+	int      left;        /* can access this many numbers before reloading */
 
 	unsigned int rand_seed; /* Seed for rand(), in ts version */
 
