@@ -1211,11 +1211,11 @@ const zend_function_entry hash_functions[] = {
 #endif /* PHP_HASH_SHA1_NOT_IN_CORE */
 
 #ifdef PHP_MHASH_BC
-	PHP_FE(mhash_keygen_s2k, arginfo_mhash_keygen_s2k)
-	PHP_FE(mhash_get_block_size, arginfo_mhash_get_block_size)
-	PHP_FE(mhash_get_hash_name, arginfo_mhash_get_hash_name)
-	PHP_FE(mhash_count, arginfo_mhash_count)
-	PHP_FE(mhash, arginfo_mhash)
+	PHP_DEP_FE(mhash_keygen_s2k, arginfo_mhash_keygen_s2k)
+	PHP_DEP_FE(mhash_get_block_size, arginfo_mhash_get_block_size)
+	PHP_DEP_FE(mhash_get_hash_name, arginfo_mhash_get_hash_name)
+	PHP_DEP_FE(mhash_count, arginfo_mhash_count)
+	PHP_DEP_FE(mhash, arginfo_mhash)
 #endif
 
 	PHP_FE_END
