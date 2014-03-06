@@ -4012,6 +4012,7 @@ zval *date_interval_read_property(zval *object, zval *member, int type, const ze
 
 //???	ALLOC_INIT_ZVAL(retval);
 //???	Z_SET_REFCOUNT_P(retval, 0);
+	retval = rv;
 
 	if (value != -99999) {
 		ZVAL_LONG(retval, value);
