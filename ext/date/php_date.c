@@ -3642,8 +3642,8 @@ PHP_METHOD(DateTimeZone, __construct)
 			tzobj->type = TIMELIB_ZONETYPE_ID;
 			tzobj->tzi.tz = tzi;
 			tzobj->initialized = 1;
-		} else {
-			ZVAL_NULL(getThis());
+//???		} else {
+//???			ZVAL_NULL(getThis());
 		}
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
@@ -4110,8 +4110,8 @@ PHP_METHOD(DateInterval, __construct)
 			diobj = Z_PHPINTERVAL_P(getThis());
 			diobj->diff = reltime;
 			diobj->initialized = 1;
-		} else {
-			ZVAL_NULL(getThis());
+//???		} else {
+//???			ZVAL_NULL(getThis());
 		}
 	}
 	zend_restore_error_handling(&error_handling TSRMLS_CC);
