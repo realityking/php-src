@@ -42797,4 +42797,3 @@ ZEND_API int zend_do_fcall(ZEND_OPCODE_HANDLER_ARGS)
 {
 	return zend_do_fcall_common_helper_SPEC(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 }
-
