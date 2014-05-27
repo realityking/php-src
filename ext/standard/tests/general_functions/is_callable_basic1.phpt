@@ -38,14 +38,6 @@ function someFunction() {
 function x123() {
 }
 
-/* function name as NULL */
-function NULL() {
-}
-
-/* function name with boolean name */
-function false() {
-}
-
 /* function name with string and special character */
 function Hello_World() {
 }
@@ -53,8 +45,6 @@ function Hello_World() {
 $defined_functions = array (
   $functionVar1 = 'someFunction',
   $functionVar2 = 'x123',
-  $functionVar3 = 'NULL',
-  $functionVar4 = 'false',
   $functionVar5 = "Hello_World"
 );
 /* use check_iscallable() to check whether given string is valid function name
@@ -83,22 +73,6 @@ bool(true)
 bool(true)
 x123
 -- Iteration  3 --
-bool(true)
-bool(true)
-bool(true)
-NULL
-bool(true)
-bool(true)
-NULL
--- Iteration  4 --
-bool(true)
-bool(true)
-bool(true)
-false
-bool(true)
-bool(true)
-false
--- Iteration  5 --
 bool(true)
 bool(true)
 bool(true)

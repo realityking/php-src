@@ -1683,6 +1683,21 @@ NEWLINE ("\r"|"\n"|"\r\n")
 	return T_NS_C;
 }
 
+<ST_IN_SCRIPTING>"true" {
+	ZVAL_TRUE(zendlval);
+	return T_TRUE;
+}
+
+<ST_IN_SCRIPTING>"false" {
+	ZVAL_FALSE(zendlval);
+	return T_FALSE;
+}
+
+<ST_IN_SCRIPTING>"null" {
+	ZVAL_NULL(zendlval);
+	return T_NULL;
+}
+
 <INITIAL>"<script"{WHITESPACE}+"language"{WHITESPACE}*"="{WHITESPACE}*("php"|"\"php\""|"'php'"){WHITESPACE}*">" {
 	YYCTYPE *bracket = (YYCTYPE*)zend_memrchr(yytext, '<', yyleng - (sizeof("script language=php>") - 1));
 

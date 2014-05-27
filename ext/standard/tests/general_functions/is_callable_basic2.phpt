@@ -45,12 +45,6 @@ class object_class
   /* function name with mixed string and integer */
   public function x123() {
   }
-  /* function name as NULL */
-  public function null() {
-  }
-  /* function name having boolean value */
-  public function TRUE() {
-  }  
 
   protected function foo2() {
   }
@@ -113,8 +107,6 @@ foreach($objects as $object) {
     array( $object, 'foo2' ),
     array( $object, 'foo3' ),
     array( $object, 'x123' ),
-    array( $object, 'null' ),
-    array( $object, 'TRUE' ),
     array( $object, '123' ),
     array( @$temp_class_obj->value, 100 ),
     array( $object, 'func' ),
@@ -170,46 +162,30 @@ object_class::x123
 bool(true)
 object_class::x123
 -- Innerloop iteration 5 of Outerloop iteration 1 --
+bool(false)
 bool(true)
+bool(false)
 bool(true)
-bool(true)
-bool(true)
-object_class::null
-bool(true)
-object_class::null
+object_class::123
+bool(false)
+object_class::123
 -- Innerloop iteration 6 of Outerloop iteration 1 --
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-object_class::TRUE
-bool(true)
-object_class::TRUE
+bool(false)
+bool(false)
+bool(false)
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 1 --
 bool(false)
 bool(true)
 bool(false)
 bool(true)
-object_class::123
+object_class::func
 bool(false)
-object_class::123
+object_class::func
 -- Innerloop iteration 8 of Outerloop iteration 1 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 1 --
-bool(false)
-bool(true)
-bool(false)
-bool(true)
-object_class::func
-bool(false)
-object_class::func
--- Innerloop iteration 10 of Outerloop iteration 1 --
 bool(true)
 bool(true)
 bool(true)
@@ -255,42 +231,26 @@ bool(false)
 bool(true)
 bool(false)
 bool(true)
-no_member_class::null
+no_member_class::123
 bool(false)
-no_member_class::null
+no_member_class::123
 -- Innerloop iteration 6 of Outerloop iteration 2 --
 bool(false)
-bool(true)
 bool(false)
-bool(true)
-no_member_class::TRUE
 bool(false)
-no_member_class::TRUE
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 2 --
 bool(false)
 bool(true)
 bool(false)
 bool(true)
-no_member_class::123
+no_member_class::func
 bool(false)
-no_member_class::123
+no_member_class::func
 -- Innerloop iteration 8 of Outerloop iteration 2 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 2 --
-bool(false)
-bool(true)
-bool(false)
-bool(true)
-no_member_class::func
-bool(false)
-no_member_class::func
--- Innerloop iteration 10 of Outerloop iteration 2 --
 bool(true)
 bool(true)
 bool(true)
@@ -336,42 +296,26 @@ bool(false)
 bool(true)
 bool(false)
 bool(true)
-contains_object_class::null
+contains_object_class::123
 bool(false)
-contains_object_class::null
+contains_object_class::123
 -- Innerloop iteration 6 of Outerloop iteration 3 --
 bool(false)
-bool(true)
 bool(false)
-bool(true)
-contains_object_class::TRUE
 bool(false)
-contains_object_class::TRUE
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 3 --
-bool(false)
 bool(true)
-bool(false)
 bool(true)
-contains_object_class::123
-bool(false)
-contains_object_class::123
+bool(true)
+bool(true)
+contains_object_class::func
+bool(true)
+contains_object_class::func
 -- Innerloop iteration 8 of Outerloop iteration 3 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 3 --
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-contains_object_class::func
-bool(true)
-contains_object_class::func
--- Innerloop iteration 10 of Outerloop iteration 3 --
 bool(true)
 bool(true)
 bool(true)
@@ -417,42 +361,26 @@ bool(false)
 bool(true)
 bool(false)
 bool(true)
-contains_object_class::null
+contains_object_class::123
 bool(false)
-contains_object_class::null
+contains_object_class::123
 -- Innerloop iteration 6 of Outerloop iteration 4 --
 bool(false)
-bool(true)
 bool(false)
-bool(true)
-contains_object_class::TRUE
 bool(false)
-contains_object_class::TRUE
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 4 --
-bool(false)
 bool(true)
-bool(false)
 bool(true)
-contains_object_class::123
-bool(false)
-contains_object_class::123
+bool(true)
+bool(true)
+contains_object_class::func
+bool(true)
+contains_object_class::func
 -- Innerloop iteration 8 of Outerloop iteration 4 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 4 --
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-contains_object_class::func
-bool(true)
-contains_object_class::func
--- Innerloop iteration 10 of Outerloop iteration 4 --
 bool(true)
 bool(true)
 bool(true)
@@ -494,46 +422,30 @@ object_class::x123
 bool(true)
 object_class::x123
 -- Innerloop iteration 5 of Outerloop iteration 5 --
+bool(false)
 bool(true)
+bool(false)
 bool(true)
-bool(true)
-bool(true)
-object_class::null
-bool(true)
-object_class::null
+object_class::123
+bool(false)
+object_class::123
 -- Innerloop iteration 6 of Outerloop iteration 5 --
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-object_class::TRUE
-bool(true)
-object_class::TRUE
+bool(false)
+bool(false)
+bool(false)
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 5 --
 bool(false)
 bool(true)
 bool(false)
 bool(true)
-object_class::123
+object_class::func
 bool(false)
-object_class::123
+object_class::func
 -- Innerloop iteration 8 of Outerloop iteration 5 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 5 --
-bool(false)
-bool(true)
-bool(false)
-bool(true)
-object_class::func
-bool(false)
-object_class::func
--- Innerloop iteration 10 of Outerloop iteration 5 --
 bool(true)
 bool(true)
 bool(true)
@@ -579,42 +491,26 @@ bool(false)
 bool(true)
 bool(false)
 bool(true)
-no_member_class::null
+no_member_class::123
 bool(false)
-no_member_class::null
+no_member_class::123
 -- Innerloop iteration 6 of Outerloop iteration 6 --
 bool(false)
-bool(true)
 bool(false)
-bool(true)
-no_member_class::TRUE
 bool(false)
-no_member_class::TRUE
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 6 --
 bool(false)
 bool(true)
 bool(false)
 bool(true)
-no_member_class::123
+no_member_class::func
 bool(false)
-no_member_class::123
+no_member_class::func
 -- Innerloop iteration 8 of Outerloop iteration 6 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 6 --
-bool(false)
-bool(true)
-bool(false)
-bool(true)
-no_member_class::func
-bool(false)
-no_member_class::func
--- Innerloop iteration 10 of Outerloop iteration 6 --
 bool(true)
 bool(true)
 bool(true)
@@ -656,46 +552,30 @@ object_class::x123
 bool(true)
 object_class::x123
 -- Innerloop iteration 5 of Outerloop iteration 7 --
+bool(false)
 bool(true)
+bool(false)
 bool(true)
-bool(true)
-bool(true)
-object_class::null
-bool(true)
-object_class::null
+object_class::123
+bool(false)
+object_class::123
 -- Innerloop iteration 6 of Outerloop iteration 7 --
-bool(true)
-bool(true)
-bool(true)
-bool(true)
-object_class::TRUE
-bool(true)
-object_class::TRUE
+bool(false)
+bool(false)
+bool(false)
+bool(false)
+Array
+bool(false)
+Array
 -- Innerloop iteration 7 of Outerloop iteration 7 --
 bool(false)
 bool(true)
 bool(false)
 bool(true)
-object_class::123
+object_class::func
 bool(false)
-object_class::123
+object_class::func
 -- Innerloop iteration 8 of Outerloop iteration 7 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 7 --
-bool(false)
-bool(true)
-bool(false)
-bool(true)
-object_class::func
-bool(false)
-object_class::func
--- Innerloop iteration 10 of Outerloop iteration 7 --
 bool(true)
 bool(true)
 bool(true)
@@ -761,22 +641,6 @@ Array
 bool(false)
 Array
 -- Innerloop iteration 8 of Outerloop iteration 8 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 9 of Outerloop iteration 8 --
-bool(false)
-bool(false)
-bool(false)
-bool(false)
-Array
-bool(false)
-Array
--- Innerloop iteration 10 of Outerloop iteration 8 --
 bool(true)
 bool(true)
 bool(true)

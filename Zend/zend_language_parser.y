@@ -216,6 +216,9 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token T_ELLIPSIS        "... (T_ELLIPSIS)"
 %token T_POW             "** (T_POW)"
 %token T_POW_EQUAL       "**= (T_POW_EQUAL)"
+%token T_TRUE            "true (T_TRUE)"
+%token T_FALSE           "false (T_FALSE)"
+%token T_NULL            "null (T_NULL)"
 
 %% /* Rules */
 
@@ -977,6 +980,9 @@ common_scalar:
 	|	T_METHOD_C					{ $$ = $1; }
 	|	T_FUNC_C					{ $$ = $1; }
 	|	T_NS_C						{ $$ = $1; }
+	|	T_TRUE						{ $$ = $1; }
+	|	T_FALSE						{ $$ = $1; }
+	|	T_NULL						{ $$ = $1; }
 	|	T_START_HEREDOC T_ENCAPSED_AND_WHITESPACE T_END_HEREDOC { $$ = $2; }
 	|	T_START_HEREDOC T_END_HEREDOC { ZVAL_EMPTY_STRING(&$$.u.constant); INIT_PZVAL(&$$.u.constant); $$.op_type = IS_CONST; }
 ;
