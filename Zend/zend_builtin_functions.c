@@ -126,10 +126,9 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_error_reporting, 0, 0, 0)
 	ZEND_ARG_INFO(0, new_error_level)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_define, 0, 0, 3)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_define, 0, 0, 2)
 	ZEND_ARG_INFO(0, constant_name)
 	ZEND_ARG_INFO(0, value)
-	ZEND_ARG_INFO(0, case_insensitive)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_defined, 0, 0, 1)
@@ -646,7 +645,7 @@ ZEND_FUNCTION(error_reporting)
 /* }}} */
 
 
-/* {{{ proto bool define(string constant_name, mixed value, boolean case_insensitive=false)
+/* {{{ proto bool define(string constant_name, mixed value)
    Define a new constant */
 ZEND_FUNCTION(define)
 {
@@ -654,16 +653,10 @@ ZEND_FUNCTION(define)
 	int name_len;
 	zval *val;
 	zval *val_free = NULL;
-	zend_bool non_cs = 0;
-	int case_sensitive = CONST_CS;
 	zend_constant c;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|b", &name, &name_len, &val, &non_cs) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &name, &name_len, &val) == FAILURE) {
 		return;
-	}
-
-	if(non_cs) {
-		case_sensitive = 0;
 	}
 
 	/* class constant, check if there is name and make sure class is valid & exists */
@@ -708,7 +701,7 @@ repeat:
 	if (val_free) {
 		zval_ptr_dtor(&val_free);
 	}
-	c.flags = case_sensitive; /* non persistent */
+	c.flags = CONST_CS; /* non persistent */
 	c.name = str_strndup(name, name_len);
 	if(c.name == NULL) {
 		RETURN_FALSE;
