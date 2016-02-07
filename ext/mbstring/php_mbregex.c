@@ -934,6 +934,8 @@ static void _php_mb_regex_ereg_replace_exec(INTERNAL_FUNCTION_PARAMETERS, OnigOp
 			}
 
 			if (eval) {
+				php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The 'e' option is deprecated, use mb_ereg_replace_callback instead");
+
 				zval v;
 				/* null terminate buffer */
 				smart_str_0(&eval_buf);
